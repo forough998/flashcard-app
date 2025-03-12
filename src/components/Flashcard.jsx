@@ -1,26 +1,63 @@
 import { useState } from "react";
 import { motion } from "framer-motion";
 
-function Flashcard({ question, answer, onDelete, onEdit }) {
+function Flashcard({ id, question, answer, onDelete, onEdit }) {
   const [flipped, setFlipped] = useState(false);
   const [isEditing, setIsEditing] = useState(false);
   const [newQuestion, setNewQuestion] = useState(question);
   const [newAnswer, setNewAnswer] = useState(answer);
 
   const handleSave = () => {
-    onEdit(newQuestion, newAnswer);
+    if (!newQuestion || !newAnswer) {
+      alert("Please enter both a question and an answer.");
+      return;
+    }
+
+    onEdit(id, newQuestion, newAnswer);
     setIsEditing(false);
   };
 
   return (
     <motion.div 
       className="relative w-64 h-40 cursor-pointer"
-      onClick={() => setFlipped(!flipped)}
-      animate={{ rotateY: flipped ? 180 : 0 }}
-      transition={{ duration: 0.6 }}
+      onClick={() => !isEditing && setFlipped(!flipped)}
     >
-      {isEditing ? (
-        <div className="w-full h-full bg-gray-700 p-5 rounded-lg shadow-lg flex flex-col justify-between">
+      {/* Card Flipping Container */}
+      <motion.div
+        className="relative w-full h-full"
+        animate={{ rotateY: flipped ? 180 : 0 }}
+        transition={{ duration: 0.6 }}
+        style={{ transformStyle: "preserve-3d" }}
+      >
+        {/* Front Side */}
+        <div
+          className={`absolute w-full h-full flex items-center justify-center text-white font-bold text-lg
+                      rounded-lg shadow-lg p-5 bg-gray-800`}
+          style={{ backfaceVisibility: "hidden" }}
+        >
+          {question}
+        </div>
+
+        {/* Back Side */}
+        <div
+          className={`absolute w-full h-full flex items-center justify-center text-white font-bold text-lg
+                      rounded-lg shadow-lg p-5 bg-blue-600`}
+          style={{ backfaceVisibility: "hidden", transform: "rotateY(180deg)" }}
+        >
+          {answer}
+        </div>
+      </motion.div>
+
+      {isEditing && (
+        <div 
+          className="absolute w-full h-full bg-gray-700 p-5 rounded-lg shadow-lg flex flex-col justify-between"
+          style={{
+            zIndex: 50, // Ensures it appears above everything
+            top: 0, // Keeps it inside the flashcard
+            left: 0, 
+          }}
+          onClick={(e) => e.stopPropagation()} // Prevents flipping while editing
+        >
           <input 
             type="text" 
             value={newQuestion} 
@@ -40,16 +77,9 @@ function Flashcard({ question, answer, onDelete, onEdit }) {
             Save
           </button>
         </div>
-      ) : (
-        <motion.div 
-          className={`w-full h-full flex items-center justify-center text-white font-bold text-lg 
-                      rounded-lg shadow-lg p-5 absolute top-0 left-0
-                      ${flipped ? "bg-blue-600" : "bg-gray-800"}`}
-        >
-          {flipped ? answer : question}
-        </motion.div>
       )}
 
+      {/* Edit & Delete Buttons */}
       {!isEditing && (
         <div className="absolute top-2 right-2 flex gap-2">
           <button 
